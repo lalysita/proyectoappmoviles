@@ -6,70 +6,51 @@ class PrivateNotesAuthDialog extends StatefulWidget {
   final bool firstTimeSetup;
 
   const PrivateNotesAuthDialog({
-    Key? key, // Se agregó Key? key para evitar un posible error.
-    this.expectedPin,
-    this.firstTimeSetup = false,
-  }) : super(key: key); // Llama al constructor de la superclase con la key.
+  super.key,
+  this.expectedPin,
+  this.firstTimeSetup = false,
+});
+
 
   @override
-  _PrivateNotesAuthDialogState createState() => _PrivateNotesAuthDialogState();
+  PrivateNotesAuthDialogState createState() => PrivateNotesAuthDialogState();
 }
 
-class _PrivateNotesAuthDialogState extends State<PrivateNotesAuthDialog> {
+class PrivateNotesAuthDialogState extends State<PrivateNotesAuthDialog> {
   final TextEditingController _pinController = TextEditingController();
   final TextEditingController _confirmPinController = TextEditingController();
   bool _isPinError = false;
-  bool _isSetupMode = false;
+  late bool _isSetupMode;
 
   @override
   void initState() {
     super.initState();
-    // Si no hay PIN establecido, ir directamente al modo de configuración
     _isSetupMode = widget.expectedPin == null || widget.firstTimeSetup;
   }
 
   Future<void> _validatePin() async {
     final prefs = await SharedPreferences.getInstance();
+    final pin = _pinController.text;
 
     if (_isSetupMode) {
-      // Modo de configuración de PIN
-      if (_pinController.text.length == 4 &&
-          int.tryParse(_pinController.text) != null) {
-        if (_confirmPinController.text == _pinController.text) {
-          // Guardar PIN
-          await prefs.setString('private_notes_pin', _pinController.text);
-          if (mounted) {
-            // Verifica si el widget está montado antes de usar Navigator.
-            Navigator.of(context).pop(_pinController.text);
-          }
+      final confirmPin = _confirmPinController.text;
+
+      if (pin.length == 4 && int.tryParse(pin) != null) {
+        if (confirmPin == pin) {
+          await prefs.setString('private_notes_pin', pin);
+          if (mounted) Navigator.of(context).pop(pin);
         } else {
-          // PINs no coinciden
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Los PINs no coinciden')),
-            );
-          }
+          _showSnackBar('Los PINs no coinciden');
         }
       } else {
-        // PIN inválido
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ingresa un PIN de 4 dígitos válido')),
-          );
-        }
+        _showSnackBar('Ingresa un PIN de 4 dígitos válido');
       }
     } else {
-      // Modo de validación de PIN existente
       final savedPin = prefs.getString('private_notes_pin');
-      if (_pinController.text == savedPin) {
-        // PIN correcto, permite el acceso
-        if (mounted) {
-          Navigator.of(context).pop(true);
-        }
+      if (pin == savedPin) {
+        if (mounted) Navigator.of(context).pop(true);
       } else {
-        // PIN incorrecto
         if (mounted) {
-          //Es importante verificar que el widget está montado antes de llamar a `setState`.
           setState(() {
             _isPinError = true;
           });
@@ -78,14 +59,16 @@ class _PrivateNotesAuthDialogState extends State<PrivateNotesAuthDialog> {
     }
   }
 
+  void _showSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(
-        _isSetupMode
-            ? 'Configurar PIN de Notas Privadas'
-            : 'Acceso a Notas Privadas',
-      ),
+      title: Text(_isSetupMode ? 'Configurar PIN de Notas Privadas' : 'Acceso a Notas Privadas'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -95,10 +78,7 @@ class _PrivateNotesAuthDialogState extends State<PrivateNotesAuthDialog> {
             maxLength: 4,
             obscureText: true,
             decoration: InputDecoration(
-              hintText:
-                  _isSetupMode
-                      ? 'Ingresa un nuevo PIN de 4 dígitos'
-                      : 'Ingresa tu PIN de 4 dígitos',
+              hintText: _isSetupMode ? 'Ingresa un nuevo PIN de 4 dígitos' : 'Ingresa tu PIN de 4 dígitos',
               errorText: _isPinError ? 'PIN incorrecto' : null,
             ),
             onSubmitted: (_) => _validatePin(),
@@ -129,7 +109,7 @@ class _PrivateNotesAuthDialogState extends State<PrivateNotesAuthDialog> {
   }
 }
 
-// Extensión para eliminar el PIN almacenado (opcional)
+// Extensión para eliminar el PIN almacenado
 extension PrivateNotesAuth on BuildContext {
   Future<void> removePrivateNotePin() async {
     final prefs = await SharedPreferences.getInstance();

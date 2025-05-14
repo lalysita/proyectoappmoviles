@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  LoginScreen({super.key});
+  const LoginScreen({super.key}); // <- const agregado
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
 
-  final String _registeredUsername = 'user1'; // Simulación de datos
+  final String _registeredUsername = 'user1';
   final String _registeredPassword = '123';
   bool _incorrectCredentials = false;
 
@@ -54,6 +54,10 @@ class _LoginScreenState extends State<LoginScreen>
 
   void _login() async {
     await _animateButton();
+
+    // 🔒 Seguridad de contexto tras await
+    if (!mounted) return;
+
     if (_usernameController.text.trim() == _registeredUsername &&
         _passwordController.text == _registeredPassword) {
       Navigator.pushReplacement(
@@ -71,7 +75,6 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final primaryColor = Theme.of(context).primaryColor;
-    final secondaryColor = Theme.of(context).colorScheme.secondary;
 
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
@@ -82,7 +85,6 @@ class _LoginScreenState extends State<LoginScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // Logo o imagen de la aplicación (reemplaza con tu asset)
               const SizedBox(height: 60),
               Text(
                 'Iniciar Sesión',
@@ -90,16 +92,14 @@ class _LoginScreenState extends State<LoginScreen>
                 style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: const Color.fromARGB(255, 118, 75, 183),
-                  fontSize: 45.0, // Agrega el tamaño de la letra que desees
+                  fontSize: 45.0,
                 ),
               ),
               const SizedBox(height: 40),
               ClipRRect(
-                borderRadius: BorderRadius.circular(
-                  99.0,
-                ), // Ajusta el radio para más o menos redondeado
+                borderRadius: BorderRadius.circular(99.0),
                 child: Image.asset(
-                  'assets/images/s.png', // Reemplaza con la ruta de tu logo profesional
+                  'assets/images/s.png',
                   height: 140,
                   width: 50,
                   fit: BoxFit.cover,
@@ -107,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(height: 60),
 
-              // Campo de Nombre de Usuario
+              // Usuario
               TextFormField(
                 controller: _usernameController,
                 keyboardType: TextInputType.emailAddress,
@@ -125,17 +125,18 @@ class _LoginScreenState extends State<LoginScreen>
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   errorBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.redAccent),
+                    borderSide: const BorderSide(color: Colors.redAccent),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   focusedErrorBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.redAccent),
+                    borderSide: const BorderSide(color: Colors.redAccent),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              // Campo de Contraseña
+
+              // Contraseña
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
@@ -166,22 +167,22 @@ class _LoginScreenState extends State<LoginScreen>
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   errorBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.redAccent),
+                    borderSide: const BorderSide(color: Colors.redAccent),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   focusedErrorBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.redAccent),
+                    borderSide: const BorderSide(color: Colors.redAccent),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
               ),
               const SizedBox(height: 10),
+
               // Olvidé mi contraseña
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
-                    // Implementar lógica de "Olvidé mi contraseña"
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Funcionalidad en desarrollo'),
@@ -196,7 +197,8 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
               const SizedBox(height: 30),
-              // Botón de Acceder con animación
+
+              // Botón acceder
               ScaleTransition(
                 scale: _scaleAnimation,
                 child: ElevatedButton(
@@ -213,21 +215,21 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                     elevation: 3,
                   ),
-                  child:
-                      _isAnimating
-                          ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                              strokeWidth: 2,
+                  child: _isAnimating
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
                             ),
-                          )
-                          : const Text('Acceder'),
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Acceder'),
                 ),
               ),
+
               if (_incorrectCredentials)
                 Padding(
                   padding: const EdgeInsets.only(top: 15),
@@ -240,7 +242,8 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
               const SizedBox(height: 30),
-              // Opción de registrarse
+
+              // Registro
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -252,12 +255,10 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   TextButton(
                     onPressed: () {
-                      // Implementar lógica de registro o navegación a la pantalla de registro
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text(
-                            'Funcionalidad de registro en desarrollo',
-                          ),
+                          content:
+                              Text('Funcionalidad de registro en desarrollo'),
                         ),
                       );
                     },

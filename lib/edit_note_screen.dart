@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; 
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+//import 'dart:io';
 
 class Note {
   String title;
@@ -60,7 +61,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
   bool _isHighlighted = false;
 
   // Registro de imágenes seleccionadas
-  List<String> _imagePaths = [];
+  final List<String> _imagePaths = [];
 
   @override
   void initState() {
@@ -144,13 +145,14 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
+    // Evitar usar context si el State ya no está montado
+    if (!mounted) return;
+
     if (image != null) {
       setState(() {
         _imagePaths.add(image.path);
       });
 
-      // En una implementación más completa, aquí se agregaría código para
-      // insertar la referencia a la imagen en el texto o guardarla asociada a la nota
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Imagen seleccionada: ${image.path}')),
       );
@@ -159,10 +161,9 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
 
   void _saveNote() {
     final Note editedNote = Note(
-      title:
-          _titleController.text.isEmpty
-              ? 'Nota sin título'
-              : _titleController.text,
+      title: _titleController.text.isEmpty
+          ? 'Nota sin título'
+          : _titleController.text,
       content: _contentController.text,
       color: _selectedColor,
       isPrivate: _isPrivate,
@@ -216,7 +217,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
                 builder: (context) {
                   return AlertDialog(
                     title: Text('Elegir color de fondo'),
-                    content: Container(
+                    content: SizedBox(
                       width: 300,
                       height: 100,
                       child: GridView.builder(
@@ -287,52 +288,31 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  // Botón para texto en negrita
+                  // Botones de formato...
                   IconButton(
                     icon: Icon(Icons.format_bold),
                     color: _isBold ? Colors.blue : null,
-                    onPressed: () {
-                      setState(() {
-                        _isBold = !_isBold;
-                      });
-                      // Aquí se implementaría la lógica para aplicar el formato
-                    },
+                    onPressed: () => setState(() => _isBold = !_isBold),
                   ),
-                  // Botón para texto en cursiva
                   IconButton(
                     icon: Icon(Icons.format_italic),
                     color: _isItalic ? Colors.blue : null,
-                    onPressed: () {
-                      setState(() {
-                        _isItalic = !_isItalic;
-                      });
-                      // Aquí se implementaría la lógica para aplicar el formato
-                    },
+                    onPressed: () => setState(() => _isItalic = !_isItalic),
                   ),
-                  // Botón para texto subrayado
                   IconButton(
                     icon: Icon(Icons.format_underlined),
                     color: _isUnderlined ? Colors.blue : null,
-                    onPressed: () {
-                      setState(() {
-                        _isUnderlined = !_isUnderlined;
-                      });
-                      // Aquí se implementaría la lógica para aplicar el formato
-                    },
+                    onPressed: () => setState(() => _isUnderlined = !_isUnderlined),
                   ),
-                  // Botón para texto resaltado
                   IconButton(
                     icon: Icon(Icons.highlight),
                     color: _isHighlighted ? Colors.blue : null,
-                    onPressed: () {
-                      setState(() {
-                        _isHighlighted = !_isHighlighted;
-                      });
-                      // Aquí se implementaría la lógica para aplicar el formato
-                    },
+                    onPressed: () => setState(() => _isHighlighted = !_isHighlighted),
                   ),
-                  // Botón para agregar imágenes
-                  IconButton(icon: Icon(Icons.image), onPressed: _pickImage),
+                  IconButton(
+                    icon: Icon(Icons.image),
+                    onPressed: _pickImage,
+                  ),
                 ],
               ),
             ),
@@ -353,11 +333,11 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
                 style: TextStyle(
                   fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
                   fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
-                  decoration:
-                      _isUnderlined
-                          ? TextDecoration.underline
-                          : TextDecoration.none,
-                  backgroundColor: _isHighlighted ? Colors.yellow[100] : null,
+                  decoration: _isUnderlined
+                      ? TextDecoration.underline
+                      : TextDecoration.none,
+                  backgroundColor:
+                      _isHighlighted ? Colors.yellow[100] : null,
                 ),
                 expands: true,
               ),
@@ -368,7 +348,7 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
           if (_imagePaths.isNotEmpty)
             Container(
               height: 80,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: _imagePaths.length,
@@ -381,8 +361,8 @@ class _EditNoteScreenState extends State<EditNoteScreen> {
                         width: 60,
                         color: Colors.grey[300],
                         child: Center(child: Text('Imagen ${index + 1}')),
-                        // En una implementación más completa, aquí se mostraría la imagen
-                        // Image.file(File(_imagePaths[index]), fit: BoxFit.cover),
+                        // Para mostrar la imagen real:
+                        // child: Image.file(File(_imagePaths[index]), fit: BoxFit.cover),
                       ),
                     ),
                   );

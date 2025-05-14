@@ -1,10 +1,11 @@
-import 'package:appnotes/edit_note_screen.dart';
-import 'package:appnotes/home_screen.dart';
-import 'package:appnotes/login_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // ESTA IMPORTACIÓN ES NECESARIA
+
+import 'edit_note_screen.dart';
+import 'home_screen.dart';
+import 'login_screen.dart';
 
 void main() {
-  runApp(const MyApp()); // Esta es la línea que faltaba
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

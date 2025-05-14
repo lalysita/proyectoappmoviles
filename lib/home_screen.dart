@@ -12,9 +12,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Note> _notes = []; // Lista de todas las notas
-  String? _privateNotesPin; // PIN para notas privadas
-  bool _isLoading = true; // Añadir bandera de carga
+  final List<Note> _notes = [];
+  String? _privateNotesPin;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -25,12 +25,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadPrivatePin() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
       setState(() {
         _privateNotesPin = prefs.getString('private_notes_pin');
-        _isLoading = false; // Marcar carga como completada
+        _isLoading = false;
       });
     } catch (e) {
-      print('Error al cargar PIN: $e');
+      debugPrint('Error al cargar PIN: $e');
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -38,7 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _logout() {
-    // Implementa aquí la lógica de cierre de sesión
     Navigator.of(context).pushReplacementNamed('/login');
   }
 
@@ -46,45 +47,39 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).pushNamed('/profile');
   }
 
-  // Método para manejar el acceso a notas privadas con autenticación
   Future<void> _goToPrivateNotes() async {
-    if (_isLoading) return; // Prevenir acciones mientras se carga
+    if (_isLoading) return;
 
-    // Obtener todas las notas privadas
     final privateNotes = _notes.where((note) => note.isPrivate).toList();
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedPin = prefs.getString('private_notes_pin');
+if (!mounted) return; // ✅ Check antes de usar context
+final savedPin = prefs.getString('private_notes_pin');
 
-      // Si no hay PIN, solicitar configuración
-      if (savedPin == null) {
-        final result = await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder:
-              (context) => PrivateNotesAuthDialog(
-                expectedPin: null,
-                firstTimeSetup: true,
-              ),
-        );
+if (savedPin == null) {
+  final result = await showDialog(
+    context: context, // ✅ Ya es seguro usarlo
+    barrierDismissible: false,
+    builder: (context) => PrivateNotesAuthDialog(
+      expectedPin: null,
+      firstTimeSetup: true,
+    ),
+  );
+  if (!mounted) return;
+  if (result is! String) return;
+}
 
-        if (result is! String) {
-          // Cancelado o sin configuración
-          return;
-        }
-      }
 
-      // Mostrar diálogo de autenticación
       final result = await showDialog(
         context: context,
         barrierDismissible: false,
-        builder:
-            (context) => PrivateNotesAuthDialog(expectedPin: _privateNotesPin),
+        builder: (context) =>
+            PrivateNotesAuthDialog(expectedPin: _privateNotesPin),
       );
 
       if (result == true) {
-        // Navegar a la pantalla de notas privadas
+        if (!mounted) return;
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -93,23 +88,20 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      print('Error al acceder a notas privadas: $e');
+      debugPrint('Error al acceder a notas privadas: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al acceder a notas privadas: $e')),
       );
     }
   }
 
-  // Método para construir la pantalla de notas privadas
   Widget _buildPrivateNotesScreen(List<Note> privateNotes) {
     return PrivateNotesScreen(
       initialPrivateNotes: privateNotes,
       onNotesUpdated: (updatedPrivateNotes) {
-        // Actualizar la lista de notas
         setState(() {
-          // Eliminar las notas privadas antiguas
           _notes.removeWhere((note) => note.isPrivate);
-          // Agregar las notas privadas actualizadas
           _notes.addAll(updatedPrivateNotes);
         });
       },
@@ -118,11 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Separar notas públicas
     final publicNotes = _notes.where((note) => !note.isPrivate).toList();
 
     if (_isLoading) {
-      // Mostrar un indicador de carga mientras se inicializa
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -170,36 +160,35 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body:
-          publicNotes.isEmpty
-              ? const Center(
-                child: Text('No hay notas públicas aún. ¡Crea una!'),
-              )
-              : ListView.builder(
-                itemCount: publicNotes.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    margin: const EdgeInsets.all(8.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            publicNotes[index].title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+      body: publicNotes.isEmpty
+          ? const Center(
+              child: Text('No hay notas públicas aún. ¡Crea una!'),
+            )
+          : ListView.builder(
+              itemCount: publicNotes.length,
+              itemBuilder: (context, index) {
+                return Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          publicNotes[index].title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
-                          const SizedBox(height: 8),
-                          Text(publicNotes[index].content),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(publicNotes[index].content),
+                      ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.push(
@@ -207,9 +196,10 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (context) => const EditNoteScreen()),
           );
 
+          if (!mounted) return;
+
           if (result != null && result is Note) {
             setState(() {
-              // Agregar la nueva nota a la lista de notas
               _notes.add(result);
             });
           }
@@ -220,7 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Este widget debería estar en un archivo separado, probablemente private_notes_screen.dart
 class PrivateNotesScreen extends StatefulWidget {
   final List<Note> initialPrivateNotes;
   final Function(List<Note>) onNotesUpdated;
@@ -232,7 +221,7 @@ class PrivateNotesScreen extends StatefulWidget {
   });
 
   @override
-  _PrivateNotesScreenState createState() => _PrivateNotesScreenState();
+  State<PrivateNotesScreen> createState() => _PrivateNotesScreenState();
 }
 
 class _PrivateNotesScreenState extends State<PrivateNotesScreen> {
@@ -250,6 +239,8 @@ class _PrivateNotesScreenState extends State<PrivateNotesScreen> {
       MaterialPageRoute(builder: (context) => EditNoteScreen(note: note)),
     );
 
+    if (!mounted) return;
+
     if (result != null && result is Note) {
       setState(() {
         final index = _privateNotes.indexWhere((n) => n == note);
@@ -257,8 +248,6 @@ class _PrivateNotesScreenState extends State<PrivateNotesScreen> {
           _privateNotes[index] = result;
         }
       });
-
-      // Notificar al padre de la actualización
       widget.onNotesUpdated(_privateNotes);
     }
   }
@@ -267,8 +256,6 @@ class _PrivateNotesScreenState extends State<PrivateNotesScreen> {
     setState(() {
       _privateNotes.remove(note);
     });
-
-    // Notificar al padre de la actualización
     widget.onNotesUpdated(_privateNotes);
   }
 
@@ -281,14 +268,14 @@ class _PrivateNotesScreenState extends State<PrivateNotesScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
-              // Crear una nueva nota privada
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const EditNoteScreen()),
               );
 
+              if (!mounted) return;
+
               if (result != null && result is Note) {
-                // Asegurar que la nota sea privada
                 final privateNote = Note(
                   title: result.title,
                   content: result.content,
@@ -303,43 +290,41 @@ class _PrivateNotesScreenState extends State<PrivateNotesScreen> {
                   _privateNotes.add(privateNote);
                 });
 
-                // Notificar al padre de la actualización
                 widget.onNotesUpdated(_privateNotes);
               }
             },
           ),
         ],
       ),
-      body:
-          _privateNotes.isEmpty
-              ? const Center(child: Text('No hay notas privadas'))
-              : ListView.builder(
-                itemCount: _privateNotes.length,
-                itemBuilder: (context, index) {
-                  final note = _privateNotes[index];
-                  return Card(
-                    margin: const EdgeInsets.all(8.0),
-                    color: note.color,
-                    child: ListTile(
-                      title: Text(note.title),
-                      subtitle: Text(note.content),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => _editNote(note),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () => _deleteNote(note),
-                          ),
-                        ],
-                      ),
+      body: _privateNotes.isEmpty
+          ? const Center(child: Text('No hay notas privadas'))
+          : ListView.builder(
+              itemCount: _privateNotes.length,
+              itemBuilder: (context, index) {
+                final note = _privateNotes[index];
+                return Card(
+                  margin: const EdgeInsets.all(8.0),
+                  color: note.color,
+                  child: ListTile(
+                    title: Text(note.title),
+                    subtitle: Text(note.content),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => _editNote(note),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => _deleteNote(note),
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }
